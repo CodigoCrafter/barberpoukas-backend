@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "nodemon src/index.ts",
     "build": "tsc",
+    "build:prod": "prisma generate && prisma migrate deploy && tsc",
     "start": "node dist/index.js"
   },
   "dependencies": {
