@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  phone        String
+  passwordHash String
+  role         String        @default("CLIENT") // CLIENT, ADMIN, BARBER
+  bio          String?       // For Barbers
+  photoUrl     String?       // For Barbers
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  
+  appointmentsAsClient Appointment[] @relation("ClientAppointments")
+  appointmentsAsBarber Appointment[] @relation("BarberAppointments")
+  availabilities       Availability[]
+  refreshTokens        RefreshToken[]
+}
+
+model Service {
+  id              String        @id @default(uuid())
+  title           String
+  description     String?
+  durationMinutes Int
+  price           Decimal
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  appointments    Appointment[]
+}
+
+model Appointment {
+  id        String            @id @default(uuid())
+  userId    String
+  barberId  String
+  serviceId String
+  startAt   DateTime
+  endAt     DateTime
+  status    String            @default("PENDING") // PENDING, CONFIRMED, CANCELLED, DONE, IN_PROGRESS
+  notes     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  client  User    @relation("ClientAppointments", fields: [userId], references: [id])
+  barber  User    @relation("BarberAppointments", fields: [barberId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id])
+}
+
+model Availability {
+  id        String   @id @default(uuid())
+  barberId  String
+  weekday   Int      // 0=Sunday, 1=Monday, etc.
+  startTime String   // "09:00"
+  endTime   String   // "18:00"
+  
+  barber    User     @relation(fields: [barberId], references: [id])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
